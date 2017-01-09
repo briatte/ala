@@ -157,7 +157,7 @@ d <- left_join(
 )
 
 d$date <- as.Date(d$date)
-d$url <- str_replace(d$url, "^/article/", "")
+d$url <- str_replace(d$url, "^/(article|column)/", "")
 d$tags <- str_replace_all(d$tags, "/topic/", "")
 d$au_url <- str_replace_all(d$au_url, "/author/", "")
 
@@ -181,5 +181,101 @@ write_csv(d, f_data)
 # show dataset:
 
 glimpse(d)
+
+# ==============================================================================
+# CITATIONS ('REFS')
+# ==============================================================================
+
+if (!file.exists(f_refs)) {
+  
+  cat("Finding citations...\n")
+  
+  f <- file.path("raw", str_c(d$url, ".html"))
+  stopifnot(file.exists(f))
+  
+  e <- data_frame()
+  z <- c() # faulty pages where the <div> match (j) goes too far
+  # see http://stackoverflow.com/q/41532698/635806 for an explanation
+  
+  p <- txtProgressBar(0, length(f), style = 3)
+  
+  for (i in f) {
+    
+    h <- read_html(i)
+    
+    # all crossrefs
+    j <- html_nodes(h, "div.main-content[itemprop='articleBody'] a") %>%
+      html_attr("href") %>%
+      basename
+    
+    j <- j[ j %in% d$url ] # might contain multiple cross-refs
+    
+    # <aside#related> and <footer> elements
+    h <- html_nodes(h, ".nocontent a") %>%
+      html_attr("href") %>%
+      basename
+    
+    h <- h[ h %in% j ] # relevant refs
+    
+    k <- identical(j[ (1 + length(j) - length(h)):length(j) ], h)
+    
+    if (!length(j)) {
+      next
+    } else if (!k) {
+      z <- c(z, i) # pages with faulty HTML
+      next
+    } else if (length(h) > 0) {
+      j <- j[ 1:(length(j) - length(h)) ] # e.g. j[1:2] when h = j[3:4]
+    }
+    
+    # j might be empty again
+    if (!length(j)) {
+      next
+    }
+    
+    e <- rbind(e, data_frame(i, j))
+    setTxtProgressBar(p, which(f == i))
+    
+  }
+  cat("\n")
+  
+  if (length(z)) {
+    cat("Removing", length(z), "unparsed pages\n", str_c("\n - ", z))
+    d <- filter(d, !url %in% str_replace(basename(z), "\\.html", ""))
+  }
+  
+  e$i <- str_replace(basename(e$i), "\\.html", "")
+  
+  e <- filter(e, i != j) %>%
+    group_by(i, j) %>%
+    tally # n = citation weight
+  
+  write_csv(e, f_refs)
+  
+}
+
+e <- read_csv(f_refs, col_types = s_refs)
+
+# articles with most outgoing links
+group_by(select(e, -n), i) %>%
+  tally %>%
+  arrange(-n) %>%
+  rename(url = i) %>%
+  left_join(d, by = "url") %>%
+  select(date, url, au_url, n)
+
+# articles with most incoming links
+group_by(select(e, -n), j) %>%
+  tally %>%
+  arrange(-n) %>%
+  rename(url = j) %>%
+  left_join(d, by = "url") %>%
+  select(date, url, au_url, n)
+
+# % of articles citing another one
+100 * n_distinct(e$i) / n_distinct(d$url)
+
+# % of articles cited by another one
+100 * n_distinct(e$j) / n_distinct(d$url)
 
 # kthxbye

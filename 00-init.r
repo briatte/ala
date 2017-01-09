@@ -50,3 +50,9 @@ s_data <- cols(
   title = col_character(),
   description = col_character()
 )
+
+f_refs <- "ala_refs.csv"
+s_refs <- cols(
+  i = col_character(),
+  j = col_character()
+)
