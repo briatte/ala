@@ -8,8 +8,8 @@ A short exercise in Web scraping.
 ## HOWTO
 
 1. Run `00-init.r` after installing its package dependencies.
--  Run `01-data.r` as many times as needed to collect all raw data and process it.
--  Run `02-plots.r` to generate summary plots.
+2. Run `01-data.r` as many times as needed to collect all raw data and process it.
+3. Run `02-plots.r` to generate summary plots.
 
 ## DATA
 
@@ -27,17 +27,28 @@ Contains information on all [_A List Apart_ articles](http://alistapart.com/arti
 
 A single article is missing (`/article/xhtml`), and _A List Apart_ blog posts published between 2013 and 2015 are downloaded but excluded from the `ala_data.csv` dataset.
 
+### `ala_refs.csv`
+
+Contains the edge list of article cross-citations:
+
+* `i` -- `url` of the citing article (source)
+* `j` -- `url` of the cited article (target)
+* `n` -- number of times the citation occurs in the source
+
+Note that a few (7) articles do not show up as sources in the edge list because of HTML parsing errors. The problem is explained in detailed in [this Stack Overflow post](http://stackoverflow.com/q/41532698/635806).
+
 ### `ala_tags.csv`
 
 Contains the general and specific topics of the articles:
 
-* `parent` is a general topic
-* `tag` is a specific topic
+* `parent` -- general topic
+* `tag` -- specific (child) topic
 
-Since general topics are also used to categorise articles, the `parent` and `tag` columns are sometimes identical.
+Since general topics are also used to categorise articles, the `parent` and `tag` columns (parent and child) are sometimes identical.
 
 ## CREDITS
 
+- [Bob Rudis](https://rud.is/b/) for [helping with the parser](http://stackoverflow.com/a/41534790/635806).
 - [Hadley Wickham](http://hadley.nz/) wrote most of the R packages used.
 - [Jeffrey Zeldman](http://www.zeldman.com/) founded _A List Apart_.
 

@@ -239,22 +239,30 @@ if (!file.exists(f_refs)) {
   }
   cat("\n")
   
-  if (length(z)) {
-    cat("Removing", length(z), "unparsed pages\n", str_c("\n - ", z))
-    d <- filter(d, !url %in% str_replace(basename(z), "\\.html", ""))
-  }
-  
   e$i <- str_replace(basename(e$i), "\\.html", "")
   
   e <- filter(e, i != j) %>%
     group_by(i, j) %>%
     tally # n = citation weight
   
+  if (length(z)) {
+    
+    z <- str_replace(basename(z), "\\.html", "")
+    cat("Removing", length(z), "unparsed pages:", str_c("\n - ", z))
+    
+    d <- filter(d, !url %in% z)
+    e <- filter(e, !i %in% z, !j %in% z)
+    
+  }
+  
   write_csv(e, f_refs)
   
 }
 
 e <- read_csv(f_refs, col_types = s_refs)
+
+stopifnot(e$i %in% d$url)
+stopifnot(e$j %in% d$url)
 
 # articles with most outgoing links
 group_by(select(e, -n), i) %>%
