@@ -13,6 +13,8 @@ A short exercise in Web scraping.
 
 ## DATA
 
+Note: the small issues raised up by data collection [might get fixed](https://github.com/briatte/ala/issues/1).
+
 ### `ala_data.csv`
 
 Contains information on all [_A List Apart_ articles](http://alistapart.com/articles) published between 1999 (inception) and 2016:
